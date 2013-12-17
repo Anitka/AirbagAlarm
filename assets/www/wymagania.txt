@@ -1,0 +1,5 @@
+﻿rejestrowac predkosc w ciągu ostatnich x minut z gpsa
+reagować na przyspieszenie
+sprawdzić co się dzieje :)
+
+środa 15.30

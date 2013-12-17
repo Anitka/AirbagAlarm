@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
+  
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+ 
+  
+  <title></title>
+  
+  <script type="text/javascript" src="./lib/cordova-2.7.0.js"></script>
+  
+  
+  <!--<link rel="stylesheet" href="https://d10ajoocuyu32n.cloudfront.net/mobile/1.3.1/jquery.mobile-1.3.1.min.css">-->
+  
+  <!-- Extra Codiqa features -->
+  <link rel="stylesheet" href="codiqa.ext.css">
+  
+  <!-- jQuery and jQuery Mobile -->
+  <!--<script src="https://d10ajoocuyu32n.cloudfront.net/jquery-1.9.1.min.js"></script>
+  <script src="https://d10ajoocuyu32n.cloudfront.net/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>-->
+
+  <!-- Extra Codiqa features -->
+  <script src="https://d10ajoocuyu32n.cloudfront.net/codiqa.ext.js"></script>
+  
+  <script type="text/javascript" charset="utf-8">
+
+    // Wait for device API libraries to load
+    //
+    document.addEventListener("deviceready", onDeviceReady, false);
+	
+	var old = 0;
+	var oldX = 0;
+	var oldY = 0;
+	var oldZ = 0;
+	
+	var myVar;
+	
+	var threshold = 35;
+	var alarmed = false;
+	
+	var disableAlarm = function(button) {
+		clearTimeout(myVar);
+		alarmed = false;
+	}
+	
+	// Show a custom confirmation dialog
+	//
+	function confirmDialog() {
+		myVar = setTimeout(function(){playAlarm()},10000);
+		alarmed = true;
+		$('#confirm').popup('open');
+		navigator.notification.beep(1);
+	}
+
+    // device APIs are available
+    //
+    function onDeviceReady() {
+        var options = { frequency: 1000 };  // Update every 3 seconds
+
+		var watchID = navigator.accelerometer.watchAcceleration(onSuccess, onError, options);
+		
+		$('#confirm').bind({
+		   popupafterclose: disableAlarm
+		});
+		//var watchID2 = navigator.geolocation.watchPosition(onSuccessAll, onError, { timeout: 20000 });
+    }
+	
+	 // Audio player
+     //
+	var my_media = null;
+	var mediaTimer = null;
+	
+    function playAudio(src) {
+		$('#confirm').popup('close');
+		if (my_media == null) {
+			// Create Media object from src
+			my_media = new Media(src, onSuccess, onError);
+		} // else play current audio
+		// Play audio
+		my_media.play();
+	}
+	
+	function playAlarm() {
+		playAudio("/android_asset/www/audio/alarm.mp3");
+		alarmed = false;
+	}
+
+    // onSuccess: Get a snapshot of the current acceleration
+    //
+    function onSuccess(acceleration) {
+		var element = document.getElementById('acceleration');
+        element.innerHTML = 
+				'Acc. X: ' + acceleration.x + '<br>' +
+              'Acc. Y: ' + acceleration.y + '<br>' +
+              'Acc. Z: ' + acceleration.z;
+			  
+		if(old == 1 && !alarmed) {
+			if(Math.abs(oldX - acceleration.x) + Math.abs(oldY - acceleration.y) +	Math.abs(oldZ - acceleration.z) > threshold) {
+				confirmDialog();
+			}
+		}
+		
+		old = 1;
+		oldX = acceleration.x;
+		oldY = acceleration.y;
+		oldZ = acceleration.z;
+    }
+	
+	function onSuccessAll(position) {
+		var element2 = document.getElementById('geolocation');
+		element2.innerHTML = 
+			'Latitude: '   + position.coords.latitude + '\n' +
+			'Longitude: ' + position.coords.longitude  + '\n' +
+			'Speed: ' +  position.coords.speed;
+	}
+
+    // onError: Failed to get the acceleration
+    //
+    function onError(error) {
+        //alert('Error: ' + error.message);
+    }
+
+    </script>
+   
+</head>
+<body>
+<div data-role="page"> 
+  <div data-role="content">
+    <h1>Airbag Alarm</h1>
+    <ul data-role="listview">
+      <li id="acceleration">Waiting for accelerator...</li>
+      <li id="geolocation">Waiting for geolocation...</li>
+    </ul>
+  </div>
+  
+  <div data-role="popup" id="confirm">
+	<div data-role="footer"><br><center>Warning!<center><br></div> 
+	<a href="#" data-rel="back" data-role="button" data-theme="a" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+	<br><center>Turn off alarm? <br>You have got 10 seconds.</center><br>
+</div>
+</div>
+</body>
+</html>
